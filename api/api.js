@@ -1,5 +1,5 @@
 
-const BASE_URL = 'http://192.168.33.58:8080';
+const BASE_URL = 'http://192.168.33.58:8081';
 
 export const generateOtp = async () => {
     try {

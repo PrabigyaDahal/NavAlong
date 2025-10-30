@@ -22,7 +22,7 @@ export default function CreateRoom() {
 
     return (
         <LinearGradient
-            colors={["#1A1F2B","#00C6FF"]} 
+            colors={["#00C6FF","#1A1F2B"]} 
             style={styles.container}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}

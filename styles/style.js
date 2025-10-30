@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
         textAlign: "center",
         fontWeight: "bold",
         fontFamily: "sans-serif-condensed",
-        marginTop: 50,
+        marginTop: 150,
         marginBottom: 20,
     },
     text: {
@@ -56,7 +56,7 @@ export const styles = StyleSheet.create({
     alignSelf: 'center',
     tintColor:"#FFFFFF",
     color: "#FFFFFF",
-    marginTop: 50,
+    marginTop: 150,
     marginBottom: 20,
   },
   digit: {
@@ -71,5 +71,15 @@ export const styles = StyleSheet.create({
     car:{
         width:200,
         height:100,
-    }
+    },
+    container: { flex: 1 },
+    map: {
+         flex: 1 ,
+         
+        },
+    buttonContainer: {
+        position: 'absolute',
+        bottom: 50,
+        right: 20,
+  },
 });

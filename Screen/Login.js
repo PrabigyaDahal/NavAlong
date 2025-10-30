@@ -9,7 +9,7 @@ export default function Login({ navigation }) {
     return (
         <LinearGradient 
             style={styles.container}
-            colors={["#1A1F2B", "#00C6FF"]}
+            colors={["#00C6FF","#1A1F2B", ]}
         >
             <Text style={styles.title}>DriveMates</Text>
             
