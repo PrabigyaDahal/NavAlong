@@ -60,7 +60,7 @@ export default function App() {
           name='joinRoom'
           component={LocationScreen}
           options={{
-            headerShown: true,
+            headerShown: false,
             headerTitleAlign: "center",
             headerTintColor: "#FFFFFF",
           }}

@@ -22,8 +22,8 @@
         "googleMaps": {
           "apiKey": "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM"
         }
-      }
-
+      },
+      "package": "com.anonymous.DriveMates"
     },
     "web": {
       "favicon": "./assets/favicon.png"

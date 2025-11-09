@@ -14,6 +14,7 @@ export default function CreateRoom() {
         try{
             const otp = await generateOtp();
             setGeneratedOtp(otp);
+            console.log("Generated OTP:", otp);
         }catch (error) {
             console.error("Error generating OTP:", error);
             // Handle error appropriately, e.g., show an alert
