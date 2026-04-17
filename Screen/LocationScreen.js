@@ -1,10 +1,15 @@
 import * as Location from 'expo-location';
 import { useEffect, useState,useRef } from 'react';
-import { StyleSheet, View,Image,TouchableOpacity } from 'react-native';
+import { StyleSheet, View,Image,TouchableOpacity,Modal } from 'react-native';
 import MaterialCommunityIcon from '@expo/vector-icons/MaterialCommunityIcons';
 import GooglePlacesTextInput from 'react-native-google-places-textinput';
 import MapView, { Marker, Region } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
+// import * as Speech from 'expo-speech';
+import CreateRoom from './CreateRoom';
+import Constants from 'expo-constants';
+
+const GOOGLE_MAPS_API_KEY = Constants.expoConfig.googMapApiKey;
 
 
 export default function HomeScreen() {
@@ -12,7 +17,11 @@ export default function HomeScreen() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [destination, setDestination] = useState(null);
   const [isLoading,setIsLoading] = useState(true);
+  const[isModalVisible,setIsModalVisible] = useState(false);
   const mapRef = useRef(null);
+  const [isnavigating,setIsNavigating] = useState(false);
+  const [distance,setDistance] = useState(null);
+  const [duration,setDuration] = useState(null);
 
   useEffect(()=> {
     async function getLocation(){ 
@@ -77,7 +86,7 @@ export default function HomeScreen() {
           bottom:0,
         }}
         >
-          {destination &&(
+          {destination && isnavigating && (
             <>
               <Marker 
                 coordinate={destination}
@@ -86,10 +95,13 @@ export default function HomeScreen() {
               <MapViewDirections
                 origin={region}
                 destination={destination}
-                apikey={'AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM'}
+                apikey={GOOGLE_MAPS_API_KEY}
                 strokeWidth={8}
                 strokeColor="blue"
                 onReady={result => {
+                  setDistance(result.distance);
+                  setDuration(result.duration);
+
                   mapRef.current.fitToCoordinates(result.coordinates,{
                     edgePadding:{
                       right:50,
@@ -98,9 +110,11 @@ export default function HomeScreen() {
                       top:50},
                     animated:true,
                   });
+                  // Speech.speak(`Distance to destination is ${result.distance} kilometers and estimated time of arrival is ${Math.ceil(result.duration)} minutes`);
                 }}
                 />      
             </>
+              
           )}
 
           <Marker
@@ -124,7 +138,7 @@ export default function HomeScreen() {
       <View style={styles.searchBox}>
         <GooglePlacesTextInput 
             style={styles.searchBar}
-            apiKey={'AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM'}
+            apiKey={GOOGLE_MAPS_API_KEY}
             placeHolderText='Search destination...'
             fetchDetails={true}
             detailsFields={['formattedAddress','location','viewport','photos']}
@@ -140,16 +154,44 @@ export default function HomeScreen() {
               }
             }} 
         />
-        <TouchableOpacity>
-           <MaterialCommunityIcon 
-              name="account-multiple-plus" 
-              size={30} 
-              color="white"
-              style ={styles.icon} 
+        {destination && <TouchableOpacity
+          onPress={() => setIsModalVisible(true)}
+        >
+          <MaterialCommunityIcon 
+            name="account-multiple-plus" 
+            size={30} 
+            color="white"
+            style ={styles.icon} 
           />
-        </TouchableOpacity>
+        </TouchableOpacity> 
+        }
+        {destination && !isnavigating && (
+          <TouchableOpacity
+            style = {styles.startButton}
+            onPress={() => setIsNavigating(true) }
+          >
+            <MaterialCommunityIcon name="navigation" size={30} color="blue" />
+          </TouchableOpacity>
+        )}
       </View>
     } 
+     <Modal
+            animationType="fade"
+            transparent={true}
+            visible={isModalVisible}
+            onRequestClose={() => {
+              setIsModalVisible(!isModalVisible);
+            }}
+            
+      >
+        <View style={styles.modalOverlay}>
+          
+            <CreateRoom 
+              modalVisible={isModalVisible}
+              setModal={setIsModalVisible}
+            />
+        </View>
+      </Modal>
     </View>
 );
 
@@ -173,6 +215,14 @@ const styles = StyleSheet.create({
     padding:5,
     borderRadius:50,
   },
+  /// CSS for modal
+    modalOverlay: {
+    margin: 55,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+  },
 
 
 /// CSS for Search bar and its elements
@@ -180,7 +230,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 40,
     left: 20,  
-    width: '100%',        
+    width: '90%',
+    alignSelf: 'center',        
   },
   searchBar:{
     container: {
@@ -213,5 +264,14 @@ const styles = StyleSheet.create({
     loadingIndicator: {
       color: '#00C6FF',
     },
+  },
+  startButton:{
+    position:'absolute',
+    top:100,
+    // alignSelf:'center',
+    // backgroundColor:'#007AFF',
+    // padding:15,
+    // borderRadius:30,
+    // elevation:5,
   }
 });

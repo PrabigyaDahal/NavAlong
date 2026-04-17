@@ -57,7 +57,7 @@ export default function App() {
                  
         />
         <Stack.Screen 
-          name='joinRoom'
+          name='locationScreen'
           component={LocationScreen}
           options={{
             headerShown: false,

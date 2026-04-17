@@ -12,6 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "extra":{
+      "googleMapsApiKey": "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM"
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

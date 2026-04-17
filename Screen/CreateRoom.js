@@ -2,12 +2,15 @@ import react from "react";
 import React, { useState } from "react";
 import { StyleSheet, View, Text, TouchableOpacity, TextInput } from "react-native";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import {styles} from "../styles/style"; // Assuming you have a styles.js file
+// import {styles} from "../styles/style"; // Assuming you have a styles.js file
 import { LinearGradient } from "expo-linear-gradient";
+
 
 import { generateOtp } from "../api/api";
 
-export default function CreateRoom() {
+import { supabase } from "../lib/supabase.js";
+
+export default function CreateRoom(props) {
     const [generatedOtp, setGeneratedOtp] = useState("");
 
     const handleGenerateOtp = async () => {
@@ -20,6 +23,17 @@ export default function CreateRoom() {
             // Handle error appropriately, e.g., show an alert
         }
     }
+    const handleModalclose = () => {
+        props.setModal(false);
+    }
+    const testConnection = async () => {
+        const{data,error} = await supabase
+        .from("profiles")
+        .select("*")
+
+        console.log("Data:", data);
+        console.log("Error:", error);
+    }
 
     return (
         <LinearGradient
@@ -28,19 +42,26 @@ export default function CreateRoom() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
         >
-
-            <MaterialCommunityIcons 
-                name="motorbike" 
-                size={70} 
-                color="black"
-                style ={styles.icon} 
-            />
-
-            <Text style={styles.text}>Group Name</Text>
-
+          { props.modalVisible && <TouchableOpacity
+                onPress={handleModalclose}
+                style={styles.closeIcon}
+            >
+                <MaterialCommunityIcons
+                    name="close-circle"
+                    size={20}
+                    style={styles.closeIcon}
+                />
+            </TouchableOpacity>}
+             <TouchableOpacity
+                onPress={testConnection}
+                style={styles.closeIcon}    >
+                    <Text style={styles.buttonText}>Test Connection</Text>
+                </TouchableOpacity>
+             <Text style={styles.title}>Create Room</Text>
+             
             <TextInput
                 style={styles.textArea}
-                placeholder="Group name"
+                placeholder="Enter your group name"
                 multiline={true}
                 numberOfLines={1}
             />
@@ -80,3 +101,40 @@ export default function CreateRoom() {
         </LinearGradient>
     )
 }
+
+const styles = StyleSheet.create({
+     textArea: {
+    height: 50,
+    borderColor: '#ccc',
+    width: '90%',
+    borderWidth: 1,
+    padding: 10,
+    textAlignVertical: 'top', // aligns text at the top in Android
+    borderRadius: 6,
+    backgroundColor: '#fff',
+    marginLeft: 20, 
+    marginTop: 10,
+  },
+  button: {
+        backgroundColor: "#00C6FF",
+        color: "white",
+        borderRadius: 10,
+        marginTop: 40,
+        width: 200,
+        alignSelf: "center",
+},
+buttonText: {
+    color: "white",
+    fontSize: 20,
+    padding: 10,
+    textAlign: "center",
+    width: 200,
+},  
+closeIcon: {
+    position:"right",
+    justifyContent:"right",
+    alignSelf: "flex-start",
+    margin: 20,
+    color: "#FFFFFF",
+},
+});
