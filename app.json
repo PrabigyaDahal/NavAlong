@@ -1,5 +1,8 @@
 {
   "expo": {
+     "extra":{
+      "googleMapsApiKey": "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM"
+    },
     "name": "DriveMates",
     "slug": "DriveMates",
     "version": "1.0.0",
@@ -12,9 +15,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "extra":{
-      "googleMapsApiKey": "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM"
-    },
+   
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
