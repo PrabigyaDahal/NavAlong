@@ -33,7 +33,7 @@ export default function App() {
       <Stack.Navigator 
         initialRouteName="Login"
         screenOptions={{
-            headerBackground: () => <NavHeader />,
+            // headerBackground: () => <NavHeader />,
             headerTitle:  <AppHeader />,
             headerTintColor: "#FFFFFF",
             headerShown: false,
@@ -50,17 +50,17 @@ export default function App() {
           name="CreateRoom" 
           component={CreateRoom}
           options={{
-            headerShown: true,
+            headerShown: false,
             headerTitleAlign: "center",
             headerTintColor: "#FFFFFF",
           }}
                  
         />
         <Stack.Screen 
-          name='joinRoom'
+          name='locationScreen'
           component={LocationScreen}
           options={{
-            headerShown: true,
+            headerShown: false,
             headerTitleAlign: "center",
             headerTintColor: "#FFFFFF",
           }}
