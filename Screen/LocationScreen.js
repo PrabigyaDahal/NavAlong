@@ -18,8 +18,9 @@ import {
   broadcastLocation,
   saveLocation,
   endRoom,
-  DB_WRITE_INTERVAL_MS,
-  leaveRoom
+  Write_To_DB_Interval,
+  leaveRoom,
+  broadcastDestination
 } from "../lib/roomService";
 
 const GOOGLE_API_KEY = "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM";
@@ -41,7 +42,14 @@ export default function LocationScreen({ navigation, route }) {
   const channelRef = useRef(null);
   const mapRef     = useRef(null);
   const placesRef = useRef(null);
+  const isNavigatingRef = useRef(false);
 
+  const setNavigating = (val) => {
+    isNavigatingRef.current = val;
+    setIsNavigating(val);
+  }
+
+  
   // ── 1. GPS watch ──────────────────────────────────────────────────────────
   useEffect(() => {
     let watcher;
@@ -50,7 +58,15 @@ export default function LocationScreen({ navigation, route }) {
       if (status !== "granted") { setIsLoading(false); return; }
       watcher = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, timeInterval: 2000, distanceInterval: 1 },
-        (pos) => { setLocation(pos); setIsLoading(false); }
+        (pos) => { 
+          setLocation(pos);
+          setIsLoading(false);
+          
+          // adding navigation mode
+          if(isNavigatingRef.current){
+            animateDriving(pos.coords);
+          }
+         }
       );
     })();
     return () => watcher?.remove();
@@ -58,7 +74,12 @@ export default function LocationScreen({ navigation, route }) {
 
   // ── 2. Realtime room channel ───────────────────────────────────────────────
   useEffect(() => {
-    if (!roomId || !userId) return;
+    
+    if (!roomId || !userId){
+      
+      return;
+    } 
+    
     const channel = subscribeToRoom(roomId, userId, (payload) => {
       setMembers((prev) => ({
         ...prev,
@@ -69,17 +90,25 @@ export default function LocationScreen({ navigation, route }) {
           timestamp: payload.timestamp,
         },
       }));
-    });
+    },
+    (destPayLoad) => {
+      setDestination({
+        latitude:      destPayLoad.latitude,
+        longitude:     destPayLoad.longitude,
+        latitudeDelta: 0.009,
+        longitudeDelta: 0.009, 
+      });
+      setDestLabel(destPayLoad.destLabel ?? "Group destination");
+    }
+  );
     channelRef.current = channel;
     return () => channel.unsubscribe();
   }, [roomId, userId]);
 
   // ── 3. Broadcast + DB persist ──────────────────────────────────────────────
   useEffect(() => {
+    
     if (!channelRef.current || !location) return;
-    broadcastLocation(channelRef.current, userId, location.coords);
-    saveLocation(userId, location.coords);
-
     broadcastLocation(channelRef.current, userId, location.coords);
     saveLocation(userId, location.coords);
 
@@ -90,7 +119,7 @@ export default function LocationScreen({ navigation, route }) {
 
     const dbTimer = setInterval(() => {
       if (location) saveLocation(userId, location.coords);
-    }, DB_WRITE_INTERVAL_MS);
+    }, Write_To_DB_Interval);
 
     return () => { clearInterval(broadcastTimer); clearInterval(dbTimer); };
   }, [location, userId]);
@@ -99,8 +128,10 @@ export default function LocationScreen({ navigation, route }) {
   const region = location ? {
     latitude:      location.coords.latitude,
     longitude:     location.coords.longitude,
-    latitudeDelta: 0.009,
-    longitudeDelta: 0.009,
+    pitch:         45,
+    zoom:          16,
+    latitudeDelta: 0.002,
+    longitudeDelta: 0.002,
     heading:       location.coords.heading,
   } : undefined;
 
@@ -114,7 +145,7 @@ export default function LocationScreen({ navigation, route }) {
       longitudeDelta: 0.009,
     });
     setDestLabel(place.details.formattedAddress ?? "Selected destination");
-    setIsNavigating(false);
+    setNavigating(false);
     setDistance(null);
     setDuration(null);
   }, []);
@@ -126,8 +157,8 @@ export default function LocationScreen({ navigation, route }) {
       latitudeDelta: 0.009,
       longitudeDelta: 0.009,
     });
-    setDestLabel("Dropped pin");
-    setIsNavigating(false);
+    setDestLabel(e.nativeEvent.formattedAddress ?? "Dropped pin");
+    setNavigating(false);
     setDistance(null);
     setDuration(null);
   }, []);
@@ -135,7 +166,7 @@ export default function LocationScreen({ navigation, route }) {
   const clearDestination = () => {
     setDestination(null);
     setDestLabel("");
-    setIsNavigating(false);
+    setNavigating(false);
     setDistance(null);
     setDuration(null);
     
@@ -147,6 +178,19 @@ export default function LocationScreen({ navigation, route }) {
     return `${Math.floor(mins / 60)}h ${Math.ceil(mins % 60)}m`;
   };
 
+  const animateDriving = (coords) => {
+    if (!mapRef.current || !coords) return;
+    mapRef.current.animateCamera({
+      center: {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      },
+      heading: coords.heading ?? 0,
+      pitch: 45,
+      zoom: 18,
+    },{duration: 300})
+  }
+
   const handleEndRoom = () => {
     Alert.alert(
       "End Session",
@@ -156,7 +200,7 @@ export default function LocationScreen({ navigation, route }) {
         {text: "End",style: "destructive", onPress: async () => {
           await endRoom(roomId);
           channelRef.current?.unsubscribe();
-          navigation.navigate("locationScreen",{userId} );
+          navigation.goBack();
         }
       }
       ]
@@ -198,10 +242,12 @@ export default function LocationScreen({ navigation, route }) {
                 onReady={(result) => {
                   setDistance(result.distance);
                   setDuration(result.duration);
+                  if(!isNavigating){
                   mapRef.current?.fitToCoordinates(result.coordinates, {
                     edgePadding: { right: 60, bottom: 240, left: 60, top: 160 },
                     animated: true,
                   });
+                  }
                 }}
               />
             </>
@@ -260,6 +306,9 @@ export default function LocationScreen({ navigation, route }) {
           <GooglePlacesAutocomplete
             ref={placesRef}
             placeholder="Destination"
+            textInputProps={{
+              editable : roomId ? isHost ? true : false : true
+            }}
             minLength={1}
             fetchDetails={true}
             numberOfResults={5}
@@ -275,7 +324,7 @@ export default function LocationScreen({ navigation, route }) {
               setDestination(newDest) 
               const label = data.description ?? details.formatted_address      
               setDestLabel(label);
-              setIsNavigating(false);
+              setNavigating(false);
               setDistance(null);
               setDuration(null);
 
@@ -318,7 +367,7 @@ export default function LocationScreen({ navigation, route }) {
                 position: "absolute",
                 top: 52,
                 left: -44,   // compensate for the magnify icon + padding
-                right: -50,  // compensate for the group button
+                right: -100,  // compensate for the group button
                 backgroundColor: "#fff",
                 borderRadius: 16,
                 shadowColor: "#000",
@@ -357,12 +406,17 @@ export default function LocationScreen({ navigation, route }) {
               </View>
             )}
           />
+          
 
           {/* Group button */}
-          {roomId ? 
-            <TouchaleOpacity
-              style={styles.groupButton}
-              onPress={()=> leaveRoom(roomId,userId)}
+          {roomId && !isHost ? 
+            <TouchableOpacity
+              style={styles.endRoomButton}
+              onPress={async()=> {
+                await leaveRoom(roomId,userId);
+                channelRef.current?.unsubscribe();
+                navigation.goBack();
+              }}
             >
               <MaterialCommunityIcon 
                 name="door-open"
@@ -371,9 +425,9 @@ export default function LocationScreen({ navigation, route }) {
               />
               <Text>Leave Room</Text>
 
-            </TouchaleOpacity> 
+            </TouchableOpacity> 
             : 
-            <TouchableOpacity
+             !roomId && <TouchableOpacity
             style={styles.groupButton}
             onPress={() => navigation.navigate("CreateRoom")}
             >
@@ -382,8 +436,9 @@ export default function LocationScreen({ navigation, route }) {
               size={22}
               color={roomId ? "#00C6FF" : "#5F6368"}
               />
-            </TouchableOpacity>
-            }
+            </TouchableOpacity>}
+            
+
             {/* End room button, only visible to host */}
 
             {roomId && isHost && (
@@ -396,7 +451,7 @@ export default function LocationScreen({ navigation, route }) {
                   size={22}
                   color="#EA4335"  />
 
-                  <Text style={styles.endRoomButtonText}>End</Text>
+                  <Text style={styles.endRoomText}>End</Text>
                 
               </TouchableOpacity>
             )}
@@ -431,7 +486,7 @@ export default function LocationScreen({ navigation, route }) {
         <TouchableOpacity
           style={styles.fab}
           onPress={() => {
-            if (region) mapRef.current?.animateToRegion(region, 600);
+            if (region) mapRef.current?.animateToRegion(region, 300);
           }}
         >
           <MaterialCommunityIcon name="crosshairs-gps" size={22} color="#1A1F2B" />
@@ -467,7 +522,12 @@ export default function LocationScreen({ navigation, route }) {
             {!isNavigating ? (
               <TouchableOpacity
                 style={styles.navigateButton}
-                onPress={() => {setIsNavigating(true)}}
+                onPress={() => {
+                  setNavigating(true)
+                  if(location){
+                    animateDriving(location.coords);
+                  }
+                }}
               >
                 <MaterialCommunityIcon name="navigation" size={20} color="#fff" />
                 <Text style={styles.navigateButtonText}>Navigate</Text>
@@ -476,8 +536,16 @@ export default function LocationScreen({ navigation, route }) {
               <TouchableOpacity
                 style={styles.stopButton}
                 onPress={() => {
-                  setIsNavigating(false)
+                  setNavigating(false)
                   
+                  if(location && mapRef.current){
+                    mapRef.current.animateToRegion({
+                      latitude: location.coords.latitude,
+                      longitude: location.coords.longitude,
+                      latitudeDelta: 0.009,
+                      longitudeDelta: 0.009,
+                    },300)
+                  }
                   // placesRef.current?.setAddressText('');
                 }}
               >

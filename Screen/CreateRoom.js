@@ -27,6 +27,7 @@ export default function RoomScreen({ navigation }) {
 
   const [loading, setLoading] = useState(false);
 
+  const [currentUserId, setCurrentUserId] = useState(null);
   const getCurrentUserId = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     return user?.id ?? null;
@@ -49,6 +50,7 @@ export default function RoomScreen({ navigation }) {
     setLoading(true);
     try {
       const userId = await getCurrentUserId();
+      setCurrentUserId(userId);
       if (!userId) {
         Alert.alert("Not signed in", "Please sign in first.");
         return;
@@ -68,14 +70,15 @@ export default function RoomScreen({ navigation }) {
   };
 
   const handleEnterRoom = () => {
+    
     navigation.navigate("locationScreen", {
       roomId:    createdRoom.id,
       roomCode:  createdRoom.short_code,
       groupName: createdRoom.group_name,
+      userId:    currentUserId,
       isHost:    true,
     });
   };
-
   // ── Join ──────────────────────────────────────────────────────────────────
   const handleJoinRoom = async () => {
     const code = codeInput;
@@ -103,6 +106,7 @@ export default function RoomScreen({ navigation }) {
         roomId:    data.id,
         roomCode:  data.short_code,
         groupName: data.group_name,
+        userId:    userId,
         isHost:    isHosting,
       });
     } catch (err) {
