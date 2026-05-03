@@ -22,7 +22,7 @@ import {
   leaveRoom,
   broadcastDestination
 } from "../lib/roomService";
-
+import {NavigationPanal} from "../components/navigationPanal";
 const GOOGLE_API_KEY = "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM";
 const BROADCAST_INTERVAL_MS = 3000;
 const STATUS_BAR_HEIGHT = Platform.OS === "android" ? StatusBar.currentHeight ?? 24 : 50;
@@ -38,6 +38,10 @@ export default function LocationScreen({ navigation, route }) {
   const [distance, setDistance]       = useState(null);
   const [duration, setDuration]       = useState(null);
   const [members, setMembers]         = useState({});
+
+  //state for navigationPanal
+  const [steps, setSteps] = useState([]);
+  const [stepIndex, setStepIndex] = useState(0);
 
   const channelRef = useRef(null);
   const mapRef     = useRef(null);
@@ -65,6 +69,26 @@ export default function LocationScreen({ navigation, route }) {
           // adding navigation mode
           if(isNavigatingRef.current){
             animateDriving(pos.coords);
+
+            setSteps((currentSteps) => {
+              setStepIndex((currentIndex) => {
+                if(currentIndex >= currentIndex.length -1) return currentIndex;
+
+                const nextStep = currentSteps[currentIndex];
+                if(!nextStep) return currentIndex;
+
+                const stepLat = nextStep.end_location.lat;
+                const stepLng = nextStep.end_location.lng;
+
+                const dLat = Math.abs(pos.coords.latitude - stepLat);
+                const dLng = Math.abs(pos.coords.longitude - stepLng);
+
+                if(dLat < 0.003 && dLng < 0.003) return currentIndex +1;
+
+                return currentIndex;
+              });
+              return currentSteps;
+            });
           }
          }
       );
@@ -169,6 +193,8 @@ export default function LocationScreen({ navigation, route }) {
     setNavigating(false);
     setDistance(null);
     setDuration(null);
+    setSteps([]);
+    setStepIndex(0);
     
     placesRef.current?.setAddressText('');
   };
@@ -242,6 +268,8 @@ export default function LocationScreen({ navigation, route }) {
                 onReady={(result) => {
                   setDistance(result.distance);
                   setDuration(result.duration);
+                  setSteps(result.legs[0].steps ?? []);
+                  setStepIndex(0);
                   if(!isNavigating){
                   mapRef.current?.fitToCoordinates(result.coordinates, {
                     edgePadding: { right: 60, bottom: 240, left: 60, top: 160 },
@@ -537,7 +565,8 @@ export default function LocationScreen({ navigation, route }) {
                 style={styles.stopButton}
                 onPress={() => {
                   setNavigating(false)
-                  
+                  setSteps([]);
+                  setStepIndex(0);
                   if(location && mapRef.current){
                     mapRef.current.animateToRegion({
                       latitude: location.coords.latitude,
@@ -556,6 +585,16 @@ export default function LocationScreen({ navigation, route }) {
           </View>
         </View>
       )}
+
+      {/* Needs UI changes for navifaation panal
+       {isNavigating && steps.length > 0 && (
+        <NavigationPanal 
+          currentStep = {steps[stepIndex]}
+          nextStep = {steps[stepIndex +1]}
+          totalStep={steps.length}
+          stepIndex={stepIndex}
+        />
+      )} */}
 
       {/* ── LOADING OVERLAY ── */}
       {isLoading && (
