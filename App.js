@@ -31,7 +31,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator 
-        initialRouteName="Login"
+        initialRouteName="locationScreen"
         screenOptions={{
             // headerBackground: () => <NavHeader />,
             headerTitle:  <AppHeader />,

@@ -40,7 +40,6 @@ export default function RoomScreen({ navigation }) {
     setCodeInput("");
   };
 
-  // ── Create ────────────────────────────────────────────────────────────────
   const handleCreateRoom = async () => {
     if (!groupName.trim()) {
       Alert.alert("Missing name", "Please enter a group name.");
@@ -79,7 +78,7 @@ export default function RoomScreen({ navigation }) {
       isHost:    true,
     });
   };
-  // ── Join ──────────────────────────────────────────────────────────────────
+
   const handleJoinRoom = async () => {
     const code = codeInput;
     if (!code) {
