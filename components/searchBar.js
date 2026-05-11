@@ -5,12 +5,15 @@ import {
     TouchableOpacity, 
     Alert,
     Platform,
-    StatusBar
+    StatusBar,
+    Modal
 } from "react-native";
 import MaterialCommunityIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { leaveRoom, endRoom, broadcastDestination } from "../lib/roomService";
 import { createRoom } from "../lib/roomService";
+import { MemberList } from "./memberList";
+import { useState } from "react";
 
 const STAT_HEIGHT = Platform.OS === "android" ? StatusBar.currentHeight ?? 24 : 50;;
 
@@ -42,12 +45,28 @@ export  function SearchBar({
             {text: "End",style: "destructive", onPress: async () => {
               await endRoom(roomId);
               channelRef.current?.unsubscribe();
-              navigation.goBack();
+              navigation.navigate("locationScreen");
             }
           }
           ]
         );
     };
+
+    const handleLeaveRoom = () => {
+      Alert.alert(
+          "Leave Session",
+          "Leaving this room? Are you sure?",
+          [
+            {text: "Cancel", style: "cancel"},
+            {text: "Leave",style: "destructive", onPress: async () => {
+              await leaveRoom(roomId,userId);
+              channelRef.current?.unsubscribe();
+              navigation.navigate("locationScreen");
+            }
+          }
+          ]
+        );
+    }
     return (
         <View style={styles.topBar}>
         
@@ -169,11 +188,7 @@ export  function SearchBar({
                   {roomId && !isHost ? 
                     <TouchableOpacity
                       style={styles.endRoomButton}
-                      onPress={async()=> {
-                        await leaveRoom(roomId,userId);
-                        channelRef.current?.unsubscribe();
-                        navigation.goBack();
-                      }}
+                      onPress={handleLeaveRoom}
                     >
                       <MaterialCommunityIcon 
                         name="door-open"
@@ -202,39 +217,15 @@ export  function SearchBar({
                       <TouchableOpacity
                       style = {styles.endRoomButton}
                       onPress = {handleEndRoom}>
-        
                         <MaterialCommunityIcon
                           name="door-open"   
                           size={22}
                           color="#EA4335"  />
-        
                           <Text style={styles.endRoomText}>End</Text>
-                        
                       </TouchableOpacity>
                     )}
                 </View>
-        
-                {/* Room badge — shown when inside a room */}
-                {roomId && (
-                  <TouchableOpacity
-                   style={styles.roomBadge}
-                   onPress = {() => 
-                    Alert.alert(
-                      groupName ?? "Your Room",
-                      `Room Code : ${roomCode} \n\n Share this with your group to let them join.`
-                    )
-                   }>
-                    <View style={styles.roomBadgeDot} />
-                    <Text style={styles.roomBadgeText}>
-                      {groupName ?? roomCode}
-                    </Text>
-                    <Text style={styles.roomBadgeSep}>·</Text>
-                    <Text style={styles.roomBadgeCount}>
-                      {memberCount +1} online
-                    </Text>
-                    <MaterialCommunityIcon name = "information-outline" size={16} color="#70757A" />
-                  </TouchableOpacity>
-                )}
+                 
               </View>
         
     );
@@ -315,42 +306,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Room badge below search
-  roomBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginLeft: 4,
-  },
-  roomBadgeDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: "#34A853",
-  },
-  roomBadgeText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#202124",
-  },
-  roomBadgeSep: {
-    color: "#9AA0A6",
-    fontSize: 13,
-  },
-  roomBadgeCount: {
-    fontSize: 13,
-    color: "#70757A",
-  },
+  
   // end room
   endRoomButton: {
     flexDirection: "row",
@@ -372,4 +328,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
+
 });
