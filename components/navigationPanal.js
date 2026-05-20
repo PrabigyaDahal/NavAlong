@@ -1,5 +1,5 @@
 import {View, Text, StyleSheet} from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const getDirectionIcon = (maneuver) => {
     switch (maneuver) {
@@ -56,7 +56,7 @@ export function NavigationPanal({currentStep, nextStep, totalStep, stepIndex}){
     if(!currentStep) return null;
 
     const instructions = stripHtml(currentStep.html_instruction);
-    const nextInstruction= nextStep ? stripHtml(nextStep.html_instruction) : null;
+    const nextInstruction= nextStep ? stripHtml(nextStep.html_instructions) : null;
     const maneuver = currentStep.maneuver ?? "straight";
     const distance = currentStep.distance?.text ?? "";
     const isLastStep = stepIndex === totalStep -1;
@@ -68,7 +68,7 @@ export function NavigationPanal({currentStep, nextStep, totalStep, stepIndex}){
             <View style = {styles.mainRow}>
                 
                 {/*Direction Icon*/} 
-                <View styles = {styles.iconBox}>
+                <View style = {styles.iconBox}>
                     <MaterialCommunityIcons 
                         name={getDirectionIcon(maneuver)}
                         size={32}
@@ -95,11 +95,11 @@ export function NavigationPanal({currentStep, nextStep, totalStep, stepIndex}){
                     size = {16}
                     color = "rgba(255,255,255,0.5)" 
                 />
-                <Text styles = {styles.nextLabel}>
+                <Text style = {styles.nextLabel}>
                     {isLastStep 
                     ? "You have arrived at your destination" 
                     : nextInstruction
-                    ? `Then,m ${nextInstruction}`
+                    ? `Then: ${nextInstruction}`
                     : "Arrived at destination"                   
                     }
                 </Text>

@@ -93,7 +93,8 @@ export default function Login({ navigation }) {
  
     // onAuthStateChange in App.js will handle navigation automatically
     setLoading(false);
-    navigation.navigate("locationScreen")
+    const { data: { user } } = await supabase.auth.getUser();
+    navigation.navigate("locationScreen", { userId: user.id })
 
   };
  

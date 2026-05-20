@@ -14,6 +14,7 @@ import { leaveRoom, endRoom, broadcastDestination } from "../lib/roomService";
 import { createRoom } from "../lib/roomService";
 import { MemberList } from "./memberList";
 import { useState } from "react";
+import { GOOGLE_MAPS_KEY } from "@env";
 
 const STAT_HEIGHT = Platform.OS === "android" ? StatusBar.currentHeight ?? 24 : 50;;
 
@@ -32,7 +33,7 @@ export  function SearchBar({
     placesRef,
 }
 ){
-    const GOOGLE_API_KEY = "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM";
+    const GOOGLE_API_KEY = GOOGLE_MAPS_KEY;
     
     const { roomId, roomCode, userId, groupName, isHost } = route?.params ?? {};
    

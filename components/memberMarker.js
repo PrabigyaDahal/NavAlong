@@ -3,8 +3,7 @@ import MaterialCommunityIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import { Marker } from "react-native-maps";
 
 export function MemberMarker({members}){
-    return
-        {Object.entries(members).map(([uid, pos]) => (
+    return Object.entries(members).map(([uid, pos]) => (
             <Marker
                 key={uid}
                 coordinate={{ latitude: pos.latitude, longitude: pos.longitude }}
@@ -16,7 +15,7 @@ export function MemberMarker({members}){
                     <MaterialCommunityIcon name="car" size={16} color="#000" />
                 </View>
             </Marker>
-        ))};
+        ));
     
 };
 const styles = StyleSheet.create({

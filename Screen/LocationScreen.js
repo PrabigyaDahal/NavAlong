@@ -26,8 +26,9 @@ import { Loading } from "../components/loading";
 import { MemberMarker } from "../components/memberMarker";
 import { DestinationPanal } from "../components/destinationPanal";
 import { MemberList } from "../components/memberList";
+import {GOOGLE_MAPS_KEY} from "@env";
 
-const GOOGLE_API_KEY = "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM";
+const GOOGLE_API_KEY = GOOGLE_MAPS_KEY;
 const BROADCAST_INTERVAL_MS = 3000;
 const STATUS_BAR_HEIGHT = Platform.OS === "android" ? StatusBar.currentHeight ?? 24 : 50;
 
@@ -80,7 +81,7 @@ export default function LocationScreen({ navigation, route }) {
 
             setSteps((currentSteps) => {
               setStepIndex((currentIndex) => {
-                if(currentIndex >= currentIndex.length -1) return currentIndex;
+                if(currentIndex >= currentSteps.length -1) return currentIndex;
 
                 const nextStep = currentSteps[currentIndex];
                 if(!nextStep) return currentIndex;
@@ -97,6 +98,13 @@ export default function LocationScreen({ navigation, route }) {
               });
               return currentSteps;
             });
+          } else {
+            mapRef.current?.animateToRegion({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              latitudeDelta: 0.009,
+              longitudeDelta : 0.009,
+            },500)
           }
          }
       );
@@ -180,6 +188,9 @@ export default function LocationScreen({ navigation, route }) {
     setNavigating(false);
     setDistance(null);
     setDuration(null);
+    if(roomId && isHost && channelRef.current){
+      broadcastDestination(channelRef.current, userId, dest, "Dropped pin")
+    } 
   }, []);
 
   const handleOnDirectionReady = (result) => {
@@ -351,7 +362,7 @@ export default function LocationScreen({ navigation, route }) {
                   roomId ={roomId}
                   roomCode ={roomCode}
                   groupName ={groupName}
-                  isHost ={groupName}
+                  isHost ={isHost}
                   userId ={userId}
                   members ={members}
                   destination ={destination}
@@ -411,7 +422,7 @@ const styles = StyleSheet.create({
     height: 65,
     padding:5,
     borderWidth: 2,
-    borderColor: "red",
+    borderColor: "#00c6FF",
     borderRadius: 50,
     backgroundColor: "#fff",
     justifyContent: "center",
