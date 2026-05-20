@@ -8,6 +8,7 @@ import {
   Platform,
   StatusBar,
   Alert,
+  Modal,
 } from "react-native";
 import MaterialCommunityIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
@@ -17,18 +18,17 @@ import {
   subscribeToRoom,
   broadcastLocation,
   saveLocation,
-  endRoom,
   Write_To_DB_Interval,
-  leaveRoom,
-  broadcastDestination
 } from "../lib/roomService";
 import {NavigationPanal} from "../components/navigationPanal";
 import { SearchBar } from "../components/searchBar";
 import { Loading } from "../components/loading";
 import { MemberMarker } from "../components/memberMarker";
 import { DestinationPanal } from "../components/destinationPanal";
+import { MemberList } from "../components/memberList";
+import {GOOGLE_MAPS_KEY} from "@env";
 
-const GOOGLE_API_KEY = "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM";
+const GOOGLE_API_KEY = GOOGLE_MAPS_KEY;
 const BROADCAST_INTERVAL_MS = 3000;
 const STATUS_BAR_HEIGHT = Platform.OS === "android" ? StatusBar.currentHeight ?? 24 : 50;
 
@@ -44,6 +44,10 @@ export default function LocationScreen({ navigation, route }) {
   const [duration, setDuration]       = useState(null);
   const [members, setMembers]         = useState({});
 
+  const [speed,setSpeed] = useState(0);
+
+  const [isVisible,setIsVisible] = useState(false);
+
   //state for navigationPanal
   const [steps, setSteps] = useState([]);
   const [stepIndex, setStepIndex] = useState(0);
@@ -58,18 +62,18 @@ export default function LocationScreen({ navigation, route }) {
     setIsNavigating(val);
   }
 
-  
-  // ── 1. GPS watch ──────────────────────────────────────────────────────────
+  // -- GPS Watcher --
   useEffect(() => {
     let watcher;
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") { setIsLoading(false); return; }
       watcher = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.High, timeInterval: 2000, distanceInterval: 1 },
+        { accuracy: Location.Accuracy.High, timeInterval: 1000, distanceInterval: 1 },
         (pos) => { 
           setLocation(pos);
           setIsLoading(false);
+          setSpeed(Math.round(pos.coords.speed*3.6))
           
           // adding navigation mode
           if(isNavigatingRef.current){
@@ -77,7 +81,7 @@ export default function LocationScreen({ navigation, route }) {
 
             setSteps((currentSteps) => {
               setStepIndex((currentIndex) => {
-                if(currentIndex >= currentIndex.length -1) return currentIndex;
+                if(currentIndex >= currentSteps.length -1) return currentIndex;
 
                 const nextStep = currentSteps[currentIndex];
                 if(!nextStep) return currentIndex;
@@ -87,13 +91,20 @@ export default function LocationScreen({ navigation, route }) {
 
                 const dLat = Math.abs(pos.coords.latitude - stepLat);
                 const dLng = Math.abs(pos.coords.longitude - stepLng);
-
+                
                 if(dLat < 0.003 && dLng < 0.003) return currentIndex +1;
 
                 return currentIndex;
               });
               return currentSteps;
             });
+          } else {
+            mapRef.current?.animateToRegion({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              latitudeDelta: 0.009,
+              longitudeDelta : 0.009,
+            },500)
           }
          }
       );
@@ -177,6 +188,9 @@ export default function LocationScreen({ navigation, route }) {
     setNavigating(false);
     setDistance(null);
     setDuration(null);
+    if(roomId && isHost && channelRef.current){
+      broadcastDestination(channelRef.current, userId, dest, "Dropped pin")
+    } 
   }, []);
 
   const handleOnDirectionReady = (result) => {
@@ -244,9 +258,9 @@ export default function LocationScreen({ navigation, route }) {
                 origin={region}
                 destination={destination}
                 apikey={GOOGLE_API_KEY}
-                strokeWidth={5}
+                strokeWidth={10}
                 strokeColor="#00C6FF"
-                onReady={handleOnDirectionReady(result) }
+                onReady={handleOnDirectionReady }
               />
             </>
           )}
@@ -270,7 +284,7 @@ export default function LocationScreen({ navigation, route }) {
       )}
 
       {/* -- Search Bar --*/}
-      <SearchBar 
+      {!isNavigating &&<SearchBar 
         navigation = {navigation}
         region={region}
         route={route}
@@ -283,7 +297,7 @@ export default function LocationScreen({ navigation, route }) {
         setDuration={setDuration}
         channelRef={channelRef}
         placesRef={placesRef}
-      />
+      />}
 
       {/* Re-centre on my location */}
       <View style={styles.recenterLocationButton}>
@@ -294,6 +308,18 @@ export default function LocationScreen({ navigation, route }) {
           }}
         >
           <MaterialCommunityIcon name="crosshairs-gps" size={22} color="#1A1F2B" />
+        </TouchableOpacity>
+      </View>
+      
+      {/** Speed Indicator */}
+      <View  
+      style={[
+        styles.speedIndicator,
+        {bottom: destination ? 180 : 100}
+      ]}>
+        <TouchableOpacity style={styles.speedText}>
+          <Text style = {styles.speedDisplay}>{speed}</Text>
+          <Text>Km/hr</Text>
         </TouchableOpacity>
       </View>
 
@@ -317,7 +343,37 @@ export default function LocationScreen({ navigation, route }) {
         placesRef={placesRef}
       />}
 
-      {/* Needs UI changes for navifaation panal
+      {roomId && 
+        (<TouchableOpacity 
+            style= {styles.roomBadge}
+            onPress={() => setIsVisible(true)}
+          >
+            <MaterialCommunityIcon name = "account" size={20} color= "#00C6FF"/>
+          </TouchableOpacity>
+        )}
+          <Modal
+            visible= {isVisible}
+            animationType = "slide"
+            transparent
+          >
+            <View style={styles.modelContainer}>
+              <View style={styles.modalComponent}>
+                <MemberList
+                  roomId ={roomId}
+                  roomCode ={roomCode}
+                  groupName ={groupName}
+                  isHost ={isHost}
+                  userId ={userId}
+                  members ={members}
+                  destination ={destination}
+                  location ={location}
+                  setIsVisible ={setIsVisible}
+                />
+              </View>
+            </View>
+          </Modal>
+
+      {/* Needs UI changes for naviation panal
        {isNavigating && steps.length > 0 && (
         <NavigationPanal 
           currentStep = {steps[stepIndex]}
@@ -355,6 +411,34 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
+  speedIndicator:{
+    position:"absolute",
+    left : 24,
+    bottom: 100,
+    gap: 10,
+  },
+  speedText: {
+    width: 65,
+    height: 65,
+    padding:5,
+    borderWidth: 2,
+    borderColor: "#00c6FF",
+    borderRadius: 50,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  speedDisplay :{
+    color: "#1A1F2B",
+    fontSize: 17,
+    fontWeight: "700"
+  },
+
 
   // ── Markers ──
   ownMarker: {
@@ -385,5 +469,44 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 4,
+  },
+    roomBadge: {
+    position: "absolute",
+    marginTop: 100,
+    marginLeft:"auto",
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    height:40,
+    width:40,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginLeft: 4,
+  },
+  modelContainer:{
+    flex:1,
+    width:"80%",
+    marginTop:50,
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf:"center",
+    borderRadius: 23,
+    minHeight:200,
+    maxHeight: 500,
+    // backgroundColor: "rgba(0,0,0,0.5)"
+  },
+  modalComponent: {
+    width: "100%",
+    maxHeight: 500,
+    backgroundColor: "white",
+    borderRadius: 23,
   },
 });
