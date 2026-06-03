@@ -27,6 +27,7 @@ import { MemberMarker } from "../components/memberMarker";
 import { DestinationPanal } from "../components/destinationPanal";
 import { MemberList } from "../components/memberList";
 import {GOOGLE_MAPS_KEY} from "@env";
+import { RoomAudio } from "../components/roomAudio";
 
 const GOOGLE_API_KEY = GOOGLE_MAPS_KEY;
 const BROADCAST_INTERVAL_MS = 3000;
@@ -258,7 +259,7 @@ export default function LocationScreen({ navigation, route }) {
                 origin={region}
                 destination={destination}
                 apikey={GOOGLE_API_KEY}
-                strokeWidth={10}
+                strokeWidth={isNavigating ? 10 : 3}
                 strokeColor="#00C6FF"
                 onReady={handleOnDirectionReady }
               />
@@ -299,8 +300,19 @@ export default function LocationScreen({ navigation, route }) {
         placesRef={placesRef}
       />}
 
+      {/* * Room-Audio */}
+     
+
       {/* Re-centre on my location */}
       <View style={styles.recenterLocationButton}>
+        {/* <MicTest /> */}
+         {roomId && (
+          <RoomAudio 
+            roomId={roomId}
+            userId={userId}
+            isInRoom={!!roomId}
+          />
+      )}
         <TouchableOpacity
           style={styles.fab}
           onPress={() => {
@@ -508,5 +520,13 @@ const styles = StyleSheet.create({
     maxHeight: 500,
     backgroundColor: "white",
     borderRadius: 23,
+  },
+
+  // ── Room Audio ──
+  micButton: {
+    position: "absolute",
+    right: 14,
+    bottom: 270,
+    gap: 10,
   },
 });
