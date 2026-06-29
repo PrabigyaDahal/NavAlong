@@ -1,8 +1,5 @@
 {
   "expo": {
-    "extra": {
-      "googleMapsApiKey": "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM"
-    },
     "name": "NavAlong",
     "slug": "NavAlong",
     "version": "1.0.0",
@@ -21,11 +18,6 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyB_FcPTryxK-i6Tw3AXaQNRhQJdsJeN7cM"
-        }
-      },
       "package": "com.anonymous.DriveMates"
     },
     "web": {
