@@ -111,7 +111,7 @@ export default function Login({ navigation }) {
       >
         {/* Logo */}
         <MaterialCommunityIcons name="car" size={64} color="#fff" style={styles.logo} />
-        <Text style={styles.title}>NavAlong</Text>
+        <Text style={styles.title}>Nav Along</Text>
         <Text style={styles.subtitle}>
           {mode === "signin" ? "Welcome back" : "Create your account"}
         </Text>

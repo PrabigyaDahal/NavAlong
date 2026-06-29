@@ -12,7 +12,7 @@ export function MemberMarker({members}){
                 flat
             >
                 <View style={styles.memberMarker}>
-                    <MaterialCommunityIcon name="car" size={16} color="#000" />
+                    <MaterialCommunityIcon name="car-sports" size={22} color="#000" />
                 </View>
             </Marker>
         ));
@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: "#FF6B35",
+        backgroundColor: "none",
         justifyContent: "center",
         alignItems: "center",
         borderWidth: 2,

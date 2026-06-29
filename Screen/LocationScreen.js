@@ -17,6 +17,7 @@ import MapViewDirections from "react-native-maps-directions";
 import {
   subscribeToRoom,
   broadcastLocation,
+  broadcastDestination,
   saveLocation,
   Write_To_DB_Interval,
 } from "../lib/roomService";
@@ -190,7 +191,7 @@ export default function LocationScreen({ navigation, route }) {
     setDistance(null);
     setDuration(null);
     if(roomId && isHost && channelRef.current){
-      broadcastDestination(channelRef.current, userId, dest, "Dropped pin")
+      broadcastDestination(channelRef.current, userId, destination, "Dropped pin")
     } 
   }, []);
 
@@ -374,6 +375,9 @@ export default function LocationScreen({ navigation, route }) {
                   roomId ={roomId}
                   roomCode ={roomCode}
                   groupName ={groupName}
+                  duration ={duration}
+                  formatDuration ={formatDuration}
+                  distance ={distance}
                   isHost ={isHost}
                   userId ={userId}
                   members ={members}

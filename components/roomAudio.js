@@ -17,7 +17,7 @@ import {
 
 import {AGORA_APP_ID} from '@env';
 
-const APP_ID = process.env.AGORA_APP_ID;
+
 const AGORA_TOKEN = null;
 
 export function RoomAudio({ roomId, userId, isInRoom }) {
@@ -52,7 +52,7 @@ export function RoomAudio({ roomId, userId, isInRoom }) {
       // Create the Agora engine
       // This is the main object that controls everything
       const engine = createAgoraRtcEngine();
-      await engine.initialize({appId: APP_ID});
+      await engine.initialize({appId: AGORA_APP_ID});
       engineRef.current = engine;
 
       // Set to audio only — no video
